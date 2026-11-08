@@ -3,6 +3,7 @@ package app.pechedebutant
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,10 +21,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Place
@@ -52,7 +55,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -67,7 +72,9 @@ import app.pechedebutant.data.RIG_LIST
 import app.pechedebutant.data.SPOTS
 import app.pechedebutant.data.baitById
 import app.pechedebutant.data.fishById
+import app.pechedebutant.data.photoBitmap
 import app.pechedebutant.data.rigById
+import app.pechedebutant.ui.MeteoScreen
 import app.pechedebutant.ui.RigLegend
 import app.pechedebutant.ui.RigSchematic
 import app.pechedebutant.ui.theme.PecheDebutantTheme
@@ -85,8 +92,39 @@ private val TABS = listOf(
     Tab("fish", "Fish", Icons.Filled.List),
     Tab("baits", "Baits", Icons.Filled.Star),
     Tab("rigs", "Rigs", Icons.Filled.Build),
-    Tab("guide", "Guide", Icons.Filled.Info)
+    Tab("guide", "Guide", Icons.Filled.Info),
+    Tab("meteo", "Météo", Icons.Filled.Cloud)
 )
+
+// Bait ids use French bait names; photo slugs use the photo file names:
+// shrimp -> crevette, crab -> crabe, mussel -> moule, squid -> calamar,
+// bread -> pain. All other bait ids match their photo slug.
+private fun baitPhotoSlug(baitId: String): String = when (baitId) {
+    "shrimp" -> "crevette"
+    "crab" -> "crabe"
+    "mussel" -> "moule"
+    "squid" -> "calamar"
+    "bread" -> "pain"
+    else -> baitId
+}
+
+/** A bundled real photo, decoded from Base64, or nothing if there is none. */
+@Composable
+private fun PhotoImage(
+    slug: String,
+    contentDescription: String,
+    modifier: Modifier = Modifier
+) {
+    val bitmap = remember(slug) { photoBitmap(slug) }
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = contentDescription,
+            contentScale = ContentScale.Crop,
+            modifier = modifier
+        )
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,6 +140,7 @@ fun PecheApp() {
         route == "baits" -> "Baits (Appâts)"
         route == "rigs" -> "Rigs (Montages)"
         route == "guide" -> "Beginner guide (Débutant)"
+        route == "meteo" -> "Météo & Marée"
         else -> "Fish (Poissons)"
     }
 
@@ -152,6 +191,7 @@ fun PecheApp() {
             composable("baits") { BaitListScreen(nav) }
             composable("rigs") { RigListScreen(nav) }
             composable("guide") { GuideScreen() }
+            composable("meteo") { MeteoScreen() }
             composable("fish/{id}") { entry ->
                 val fish = fishById(entry.arguments?.getString("id") ?: "")
                 if (fish != null) FishDetailScreen(fish, nav) else NotFound("Fish not found.")
@@ -279,19 +319,31 @@ private fun FishListScreen(nav: NavHostController) {
                     Modifier.fillMaxWidth().padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = fish.frenchName.first().toString(),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleLarge
+                    val fishBitmap = remember(fish.id) { photoBitmap(fish.id) }
+                    if (fishBitmap != null) {
+                        Image(
+                            bitmap = fishBitmap.asImageBitmap(),
+                            contentDescription = fish.frenchName,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(RoundedCornerShape(8.dp))
                         )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = fish.frenchName.first().toString(),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                        }
                     }
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
@@ -333,6 +385,15 @@ private fun FishDetailScreen(
 ) {
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp)) {
         item {
+            PhotoImage(
+                slug = fish.id,
+                contentDescription = fish.frenchName,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            )
+            Spacer(Modifier.height(12.dp))
             Text(
                 text = fish.frenchName,
                 style = MaterialTheme.typography.headlineSmall,
@@ -402,22 +463,39 @@ private fun BaitListScreen(nav: NavHostController) {
                     .clickable { nav.navigate("bait/${bait.id}") },
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
-                Column(Modifier.fillMaxWidth().padding(12.dp)) {
-                    Text(
-                        text = bait.frenchName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = bait.englishName,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "Best for: ${bait.bestFor}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Row(
+                    Modifier.fillMaxWidth().padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val baitBitmap = remember(bait.id) { photoBitmap(baitPhotoSlug(bait.id)) }
+                    if (baitBitmap != null) {
+                        Image(
+                            bitmap = baitBitmap.asImageBitmap(),
+                            contentDescription = bait.frenchName,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                        )
+                        Spacer(Modifier.width(12.dp))
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            text = bait.frenchName,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = bait.englishName,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "Best for: ${bait.bestFor}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }
@@ -428,6 +506,15 @@ private fun BaitListScreen(nav: NavHostController) {
 private fun BaitDetailScreen(bait: app.pechedebutant.data.Bait) {
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp)) {
         item {
+            PhotoImage(
+                slug = baitPhotoSlug(bait.id),
+                contentDescription = bait.frenchName,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            )
+            Spacer(Modifier.height(12.dp))
             Text(
                 text = bait.frenchName,
                 style = MaterialTheme.typography.headlineSmall,

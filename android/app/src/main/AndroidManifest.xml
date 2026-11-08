@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Pêche Débutant v0.1 is fully offline: no permissions at all. -->
+    <!-- Pêche Débutant v0.2: INTERNET and location are only for the
+         Météo & Marée tab (Open-Meteo, free, no account). The other tabs
+         (Poissons, Appâts, Montages, Guide) stay fully offline. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:allowBackup="true"
