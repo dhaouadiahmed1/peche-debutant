@@ -608,6 +608,9 @@ fun HomeScreen(nav: NavHostController) {
     }
 
     val spot = meteo?.let { spotScore(it) }
+    // Local copy: 'meteo' is a delegated property (by remember), so Kotlin
+    // cannot smart-cast it after a null check. Use this plain val instead.
+    val currentMeteo = meteo
     val feed = buildFeed(meteo)
     val todayLabel = LocalDate.now().format(
         DateTimeFormatter.ofPattern("EEEE d MMMM", java.util.Locale.FRENCH)
@@ -699,7 +702,7 @@ fun HomeScreen(nav: NavHostController) {
                             color = Muted,
                             fontSize = 14.sp
                         )
-                    } else if (spot != null && meteo != null) {
+                    } else if (spot != null && currentMeteo != null) {
                         Box(
                             modifier = Modifier
                                 .size(150.dp)
@@ -735,9 +738,9 @@ fun HomeScreen(nav: NavHostController) {
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Vent ${meteo.windSpeed.toInt()} km/h · " +
-                                "Vagues ${"%.2f".format(meteo.waveHeight)} m · " +
-                                "Eau ${"%.1f".format(meteo.seaTemp)}°C",
+                            text = "Vent ${currentMeteo.windSpeed.toInt()} km/h · " +
+                                "Vagues ${"%.2f".format(currentMeteo.waveHeight)} m · " +
+                                "Eau ${"%.1f".format(currentMeteo.seaTemp)}°C",
                             color = Muted,
                             fontSize = 14.sp,
                             modifier = Modifier.padding(top = 4.dp)
@@ -765,15 +768,15 @@ fun HomeScreen(nav: NavHostController) {
                                 contentColor = Navy
                             )
                         ) { Text("Ouvrir Météo", fontWeight = FontWeight.Bold) }
-                        if (spot != null && meteo != null) {
+                        if (spot != null && currentMeteo != null) {
                             OutlinedButton(
                                 onClick = {
                                     shareText(
                                         context,
                                         "Pêche Débutant — Check blassa à $DASH_PLACE : " +
                                             "${spot.verdict} ${spot.score}/10, " +
-                                            "vent ${meteo.windSpeed.toInt()} km/h, " +
-                                            "vagues ${"%.2f".format(meteo.waveHeight)} m. " +
+                                            "vent ${currentMeteo.windSpeed.toInt()} km/h, " +
+                                            "vagues ${"%.2f".format(currentMeteo.waveHeight)} m. " +
                                             "Meilleurs poissons : " +
                                             "${bestFishNowText(spot.score)}. " +
                                             "Meilleur appât : ver de mer."
