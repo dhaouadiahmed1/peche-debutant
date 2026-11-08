@@ -27,10 +27,12 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
@@ -42,6 +44,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -58,6 +61,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -74,7 +78,9 @@ import app.pechedebutant.data.baitById
 import app.pechedebutant.data.fishById
 import app.pechedebutant.data.photoBitmap
 import app.pechedebutant.data.rigById
+import app.pechedebutant.ui.HomeScreen
 import app.pechedebutant.ui.MeteoScreen
+import app.pechedebutant.ui.shareText
 import app.pechedebutant.ui.RigLegend
 import app.pechedebutant.ui.RigSchematic
 import app.pechedebutant.ui.theme.PecheDebutantTheme
@@ -89,6 +95,7 @@ class MainActivity : ComponentActivity() {
 private data class Tab(val route: String, val label: String, val icon: ImageVector)
 
 private val TABS = listOf(
+    Tab("home", "Accueil", Icons.Filled.Home),
     Tab("fish", "Fish", Icons.Filled.List),
     Tab("baits", "Baits", Icons.Filled.Star),
     Tab("rigs", "Rigs", Icons.Filled.Build),
@@ -131,12 +138,13 @@ private fun PhotoImage(
 fun PecheApp() {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
-    val route = backStack?.destination?.route ?: "fish"
+    val route = backStack?.destination?.route ?: "home"
     val isDetail = route.startsWith("fish/") || route.startsWith("bait/") || route.startsWith("rig/")
     val title = when {
         route.startsWith("fish/") -> "Fish detail"
         route.startsWith("bait/") -> "Bait detail"
         route.startsWith("rig/") -> "Rig detail"
+        route == "home" -> "Accueil"
         route == "baits" -> "Baits (Appâts)"
         route == "rigs" -> "Rigs (Montages)"
         route == "guide" -> "Beginner guide (Débutant)"
@@ -169,7 +177,7 @@ fun PecheApp() {
                         selected = route == tab.route,
                         onClick = {
                             nav.navigate(tab.route) {
-                                popUpTo("fish") { inclusive = false }
+                                popUpTo("home") { inclusive = false }
                                 launchSingleTop = true
                             }
                         },
@@ -182,11 +190,12 @@ fun PecheApp() {
     ) { padding ->
         NavHost(
             navController = nav,
-            startDestination = "fish",
+            startDestination = "home",
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            composable("home") { HomeScreen(nav) }
             composable("fish") { FishListScreen(nav) }
             composable("baits") { BaitListScreen(nav) }
             composable("rigs") { RigListScreen(nav) }
@@ -383,6 +392,7 @@ private fun FishDetailScreen(
     fish: app.pechedebutant.data.Fish,
     nav: NavHostController
 ) {
+    val context = LocalContext.current
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp)) {
         item {
             PhotoImage(
@@ -432,6 +442,24 @@ private fun FishDetailScreen(
             }
             SectionTitle("Beginner tips")
             BulletList(fish.tips)
+            Spacer(Modifier.height(12.dp))
+            OutlinedButton(
+                onClick = {
+                    val baitNames = fish.bestBaitIds.mapNotNull { baitById(it)?.frenchName }
+                        .joinToString(", ")
+                    shareText(
+                        context,
+                        "Pêche Débutant — ${fish.frenchName} (${fish.tunisianName}, " +
+                            "${fish.scientificName}). Meilleurs appâts : $baitNames. " +
+                            "Hameçon ${fish.hookSize}. ${fish.bestRig}."
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Filled.Share, contentDescription = "Partager")
+                Spacer(Modifier.width(8.dp))
+                Text("Partager")
+            }
             Text(
                 text = "Release small fish. Check local rules for size limits.",
                 style = MaterialTheme.typography.bodySmall,
@@ -504,6 +532,7 @@ private fun BaitListScreen(nav: NavHostController) {
 
 @Composable
 private fun BaitDetailScreen(bait: app.pechedebutant.data.Bait) {
+    val context = LocalContext.current
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp)) {
         item {
             PhotoImage(
@@ -531,6 +560,21 @@ private fun BaitDetailScreen(bait: app.pechedebutant.data.Bait) {
             Text(text = bait.keepFresh, style = MaterialTheme.typography.bodyMedium)
             SectionTitle("How to hook it")
             NumberedSteps(bait.hookingSteps)
+            Spacer(Modifier.height(12.dp))
+            OutlinedButton(
+                onClick = {
+                    shareText(
+                        context,
+                        "Pêche Débutant — ${bait.frenchName} (${bait.englishName}). " +
+                            "Idéal pour : ${bait.bestFor}."
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Filled.Share, contentDescription = "Partager")
+                Spacer(Modifier.width(8.dp))
+                Text("Partager")
+            }
             Spacer(Modifier.height(16.dp))
         }
     }

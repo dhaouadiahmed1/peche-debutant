@@ -1,14 +1,45 @@
-# Pêche Débutant v0.2
+# Pêche Débutant v0.3
 
 A beginner fishing app for shore fishing at Ras Jebel, Bizerte, Ghar el Melh,
 Cap Zebib and Sidi Ali El Mekki, North Tunisia (Mediterranean).
 
 **Fish, Baits, Rigs and Guide tabs: fully offline, no login, no ads.**
-The new Météo & Marée tab needs internet (see below).
+The Météo & Marée tab and the Accueil hero need internet (see below).
+
+## What is new in v0.3
+
+- **Accueil (new first tab, the default screen)** — a luxury dashboard,
+  dark navy (`#04121E` / `#0A2E44`) and gold (`#D4AF37`), big 3D-style
+  cards with shadows, rounded 28 dp corners and a subtle press-scale
+  animation:
+  - **Stories row** on top (gold rings, like Instagram / Facebook):
+    Dorade, Loup, Météo, Bibi, Montage, Guide. Tapping a story opens
+    that fish, bait, rig list, guide or the Météo tab.
+  - **Check blassa hero**: a gold-ring score circle with the live score
+    out of 10 (same Open-Meteo data and same scoring rules as the Météo
+    tab), big weather numbers (air, wind, waves, sea temperature), and
+    big cards for Poissons, Appâts, Montages and Météo & Marée.
+    The dashboard fetches for Ras Jebel only. If there is no connection
+    it shows the score saved earlier today, or a prompt to open the
+    Météo tab. It never invents weather numbers.
+  - **Feed du jour** below (scrollable, like Instagram / Facebook):
+    Check blassa today, Poisson du jour, Appât du jour and Météo demain.
+    The fish and bait of the day rotate through the real lists by
+    day-of-year, so the feed changes every day. Each post shows the
+    real bundled photo where one exists.
+  - **Likes**: a heart button on each feed post, saved on the phone
+    only (SharedPreferences). No account, no server.
+  - **Partager (WhatsApp share, no account)**: a Partager button on
+    each feed post, on the Check blassa hero, and on every fish and
+    bait detail screen. It opens the Android share chooser
+    (`ACTION_SEND`, `text/plain`) with a French text built from the
+    real content, and the user picks WhatsApp himself. No WhatsApp
+    package is hardcoded, no WhatsApp API is used, nothing is sent
+    automatically. No account, no server, no Firebase, no login.
 
 ## What is in v0.2
 
-5 tabs, bottom navigation:
+6 tabs, bottom navigation:
 
 - **Fish (Poissons)** — 12 fish of the area, searchable. Each fish has its
   French, English and Tunisian name, scientific name, habitat, season,
@@ -127,4 +158,4 @@ v0.1 had zero permissions. v0.2 adds three, only for the Météo & Marée tab:
 - Theme: sea blue `#0B5A7A` and sand, light theme following the system.
 - Network: only the Météo tab, with `HttpURLConnection` and `org.json`
   (built into Android). No OkHttp, no Retrofit, no other dependency added.
-- Version: versionCode 2, versionName "0.2".
+- Version: versionCode 3, versionName "0.3".
