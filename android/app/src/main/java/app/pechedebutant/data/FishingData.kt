@@ -322,10 +322,7 @@ val BAIT_LIST: List<Bait> = listOf(
             "Slide the worm up the hook, threading it along the shank.",
             "Push the hook out again in the middle of the worm, so it stays on.",
             "Leave the tail free, about 2 to 3 cm. It must wriggle in the water."
-        ),
-        depthRange = "0 à 150 m",
-        edibility = "Excellente",
-        lures = "Rarement aux leurres — appâts sur le fond"
+        )
     ),
     Bait(
         id = "bibi",
