@@ -1,6 +1,15 @@
-// Pêche Débutant v0.3 — Accueil dashboard.
+// Pêche Débutant v0.4 — Accueil dashboard.
 // Luxury dark navy + gold 3D style, dynamic like Instagram / Facebook:
 // a stories row on top, a feed below that changes every day.
+// v0.4 restyle, driven by the three design skills learned 2026-11-10:
+// - UI/UX Pro Max: glassmorphism (frosted-glass cards over a deep navy
+//   gradient), a consistent type scale (score 56sp, titles 22sp, body
+//   15sp, captions 12sp), touch targets >= 48dp, bottom nav max 5 tabs.
+// - Impeccable (Operate mode): scanability and consistency first;
+//   refinement preserves the incumbent navy + gold identity — the brief
+//   wins, so no green accent from the tool's palette suggestion.
+// - Taste: one section per screen, equal edges, card lift 2px + photo
+//   zoom 1.02 on press, hero entrance once, no tilt, no carousels.
 // - Check blassa hero: live score from Open-Meteo, same endpoints and same
 //   scoring rules as MeteoScreen.kt (spotScore is reused, not duplicated).
 //   The dashboard only fetches for Ras Jebel (37.2476, 10.0697), the spot
@@ -17,7 +26,9 @@ package app.pechedebutant.ui
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,7 +43,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -68,6 +79,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -88,12 +100,16 @@ import org.json.JSONObject
 private val Navy = Color(0xFF04121E)
 private val NavyCard = Color(0xFF0A2E44)
 private val NavyCard2 = Color(0xFF123E57)
-private val NavyLine = Color(0xFF2A5568)
+private val NavyDeep = Color(0xFF0E4A63)
 private val Gold = Color(0xFFD4AF37)
 private val GoldLight = Color(0xFFFFF3C4)
 private val GoldDark = Color(0xFF8C6D1F)
 private val Cream = Color(0xFFF5F1E6)
 private val Muted = Color(0xFFB9CBD6)
+// Glassmorphism (v0.4): frosted-glass surfaces over the navy gradient.
+// Semi-transparent white so the gradient shows through, 1px light border.
+private val Glass = Color(0x14FFFFFF)
+private val GlassBorder = Color(0x38FFFFFF)
 
 // The spot in the app. Same fallback position as MeteoScreen.kt.
 private const val DASH_LAT = 37.2476
@@ -450,7 +466,8 @@ private fun buildFeed(meteo: MeteoData?): List<FeedPost> {
 
 // ------------------------------------------------------------------ UI
 
-/** Big card with a subtle press-scale animation (3D feel). */
+/** Big glass card. On press it lifts 2px (Taste house rule) — the lift is
+ *  a translation only, so the layout bounds never shift (pro-rules). */
 @Composable
 private fun PressableCard(
     onClick: () -> Unit,
@@ -459,17 +476,23 @@ private fun PressableCard(
 ) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(if (pressed) 0.96f else 1f, label = "press")
+    val lift by animateFloatAsState(
+        if (pressed) -2f else 0f,
+        animationSpec = tween(durationMillis = 150, easing = FastOutSlowInEasing),
+        label = "lift"
+    )
+    val density = LocalDensity.current
     Card(
         modifier = modifier
-            .graphicsLayer(scaleX = scale, scaleY = scale)
+            .graphicsLayer { translationY = lift * density.density }
             .clickable(
                 interactionSource = interaction,
                 indication = null,
                 onClick = onClick
             ),
         shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = NavyCard2),
+        colors = CardDefaults.cardColors(containerColor = Glass),
+        border = androidx.compose.foundation.BorderStroke(1.dp, GlassBorder),
         elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
         content = content
     )
@@ -491,6 +514,7 @@ private fun LikeButton(postId: String, baseLikes: Int) {
             liked = !liked
             prefs.edit().putBoolean("liked_$postId", liked).apply()
         },
+        modifier = Modifier.heightIn(min = 48.dp),
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = if (liked) Gold else Cream
         )
@@ -510,7 +534,8 @@ private fun FeedPostCard(post: FeedPost, nav: NavHostController) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = NavyCard),
+        colors = CardDefaults.cardColors(containerColor = Glass),
+        border = androidx.compose.foundation.BorderStroke(1.dp, GlassBorder),
         elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
     ) {
         Column(Modifier.padding(16.dp)) {
@@ -524,7 +549,18 @@ private fun FeedPostCard(post: FeedPost, nav: NavHostController) {
             val bitmap = remember(post.photoSlug) {
                 post.photoSlug?.let { slug -> photoBitmap(slug) }
             }
+            // Photo zoom state is read unconditionally: never call remember
+            // or collectIsPressedAsState inside the if-branch below.
+            val photoInteraction = remember { MutableInteractionSource() }
+            val photoPressed by photoInteraction.collectIsPressedAsState()
+            val photoZoom by animateFloatAsState(
+                if (photoPressed) 1.02f else 1f,
+                animationSpec = tween(durationMillis = 150, easing = FastOutSlowInEasing),
+                label = "photoZoom"
+            )
             if (bitmap != null) {
+                // Photo zooms 1.02 inside its frame while pressed (Taste).
+                // The photo is a real control: tapping it opens the post.
                 Image(
                     bitmap = bitmap.asImageBitmap(),
                     contentDescription = post.title,
@@ -533,6 +569,12 @@ private fun FeedPostCard(post: FeedPost, nav: NavHostController) {
                         .fillMaxWidth()
                         .height(180.dp)
                         .clip(RoundedCornerShape(16.dp))
+                        .graphicsLayer(scaleX = photoZoom, scaleY = photoZoom)
+                        .clickable(
+                            interactionSource = photoInteraction,
+                            indication = null,
+                            onClick = { nav.navigate(post.route) }
+                        )
                 )
                 Spacer(Modifier.height(10.dp))
             } else {
@@ -567,7 +609,7 @@ private fun FeedPostCard(post: FeedPost, nav: NavHostController) {
             Text(
                 text = post.body,
                 color = Muted,
-                fontSize = 14.sp,
+                fontSize = 15.sp,
                 modifier = Modifier.padding(top = 4.dp)
             )
             Row(
@@ -577,10 +619,12 @@ private fun FeedPostCard(post: FeedPost, nav: NavHostController) {
                 LikeButton(post.id, post.baseLikes)
                 OutlinedButton(
                     onClick = { nav.navigate(post.route) },
+                    modifier = Modifier.heightIn(min = 48.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Cream)
                 ) { Text("Voir") }
                 OutlinedButton(
                     onClick = { shareText(context, post.shareText) },
+                    modifier = Modifier.heightIn(min = 48.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Gold)
                 ) {
                     Icon(Icons.Filled.Share, contentDescription = "Partager")
@@ -597,8 +641,11 @@ fun HomeScreen(nav: NavHostController) {
     val context = LocalContext.current
     var meteo by remember { mutableStateOf(loadMeteoCache(context)) }
     var loading by remember { mutableStateOf(meteo == null) }
+    // Hero entrance: plays once, when the screen first shows.
+    var heroVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
+        heroVisible = true
         val fresh = fetchDashboardMeteo()
         if (fresh != null) {
             saveMeteoCache(context, fresh)
@@ -606,6 +653,17 @@ fun HomeScreen(nav: NavHostController) {
         }
         loading = false
     }
+    // One authored moment (craft-floor): the hero fades and settles in once.
+    val heroAlpha by animateFloatAsState(
+        if (heroVisible) 1f else 0.6f,
+        animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+        label = "heroAlpha"
+    )
+    val heroScale by animateFloatAsState(
+        if (heroVisible) 1f else 0.97f,
+        animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+        label = "heroScale"
+    )
 
     val spot = meteo?.let { spotScore(it) }
     // Local copy: 'meteo' is a delegated property (by remember), so Kotlin
@@ -619,9 +677,11 @@ fun HomeScreen(nav: NavHostController) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Navy)
-            .padding(horizontal = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+            .background(
+                Brush.verticalGradient(listOf(Navy, NavyCard, NavyDeep))
+            )
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
             Spacer(Modifier.height(10.dp))
@@ -648,7 +708,7 @@ fun HomeScreen(nav: NavHostController) {
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(66.dp)
+                                .size(72.dp)
                                 .clip(CircleShape)
                                 .background(
                                     Brush.linearGradient(
@@ -674,12 +734,15 @@ fun HomeScreen(nav: NavHostController) {
             }
         }
 
-        // Hero: Check blassa, gold ring, big score.
+        // Hero: Check blassa, gold ring, big score. Glassmorphism (v0.4):
+        // frosted-glass surface over the navy gradient, gold border.
         item {
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer(alpha = heroAlpha, scaleX = heroScale, scaleY = heroScale),
                 shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(containerColor = NavyCard),
+                colors = CardDefaults.cardColors(containerColor = Glass),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Gold),
                 elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
             ) {
@@ -719,7 +782,7 @@ fun HomeScreen(nav: NavHostController) {
                                 Text(
                                     text = "${spot.score}/10",
                                     color = Navy,
-                                    fontSize = 40.sp,
+                                    fontSize = 56.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
@@ -742,7 +805,7 @@ fun HomeScreen(nav: NavHostController) {
                                 "Vagues ${"%.2f".format(currentMeteo.waveHeight)} m · " +
                                 "Eau ${"%.1f".format(currentMeteo.seaTemp)}°C",
                             color = Muted,
-                            fontSize = 14.sp,
+                            fontSize = 15.sp,
                             modifier = Modifier.padding(top = 4.dp)
                         )
                     } else {
@@ -763,6 +826,7 @@ fun HomeScreen(nav: NavHostController) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
                             onClick = { nav.navigate("meteo") },
+                            modifier = Modifier.heightIn(min = 48.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Gold,
                                 contentColor = Navy
@@ -782,6 +846,7 @@ fun HomeScreen(nav: NavHostController) {
                                             "Meilleur appât : ver de mer."
                                     )
                                 },
+                                modifier = Modifier.heightIn(min = 48.dp),
                                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Gold)
                             ) {
                                 Icon(Icons.Filled.Share, contentDescription = "Partager")
@@ -810,7 +875,8 @@ fun HomeScreen(nav: NavHostController) {
                     Card(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = NavyCard2),
+                        colors = CardDefaults.cardColors(containerColor = Glass),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, GlassBorder),
                         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                     ) {
                         Column(
@@ -849,7 +915,7 @@ fun HomeScreen(nav: NavHostController) {
                     Text(
                         text = "Poissons",
                         color = Cream,
-                        fontSize = 21.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(18.dp, 18.dp, 18.dp, 0.dp)
                     )
@@ -867,7 +933,7 @@ fun HomeScreen(nav: NavHostController) {
                     Text(
                         text = "Appâts",
                         color = Cream,
-                        fontSize = 21.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(18.dp, 18.dp, 18.dp, 0.dp)
                     )
@@ -892,7 +958,7 @@ fun HomeScreen(nav: NavHostController) {
                     Text(
                         text = "Montages",
                         color = Cream,
-                        fontSize = 21.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(18.dp, 18.dp, 18.dp, 0.dp)
                     )
@@ -910,7 +976,7 @@ fun HomeScreen(nav: NavHostController) {
                     Text(
                         text = "Météo & Marée",
                         color = Cream,
-                        fontSize = 21.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(18.dp, 18.dp, 18.dp, 0.dp)
                     )
@@ -921,6 +987,28 @@ fun HomeScreen(nav: NavHostController) {
                         modifier = Modifier.padding(18.dp, 4.dp, 18.dp, 18.dp)
                     )
                 }
+            }
+        }
+        // Guide lives here now: the bottom nav has 5 tabs in v0.4, and the
+        // Guide is reached from this card and from the Guide story.
+        item {
+            PressableCard(
+                onClick = { nav.navigate("guide") },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Guide Débutant",
+                    color = Cream,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(18.dp, 18.dp, 18.dp, 0.dp)
+                )
+                Text(
+                    text = "Matériel, lancer, sécurité, spots — tout pour commencer",
+                    color = Muted,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(18.dp, 4.dp, 18.dp, 18.dp)
+                )
             }
         }
 

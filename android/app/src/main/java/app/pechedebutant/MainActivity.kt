@@ -28,7 +28,6 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
@@ -94,12 +93,14 @@ class MainActivity : ComponentActivity() {
 
 private data class Tab(val route: String, val label: String, val icon: ImageVector)
 
+// v0.4: 5 tabs only (UI/UX Pro Max: max 5 in a bottom nav). The Guide
+// leaves the nav but stays in the app: its "guide" route still exists
+// below, reached from the dashboard Guide card and the Guide story.
 private val TABS = listOf(
     Tab("home", "Accueil", Icons.Filled.Home),
     Tab("fish", "Fish", Icons.Filled.List),
     Tab("baits", "Baits", Icons.Filled.Star),
     Tab("rigs", "Rigs", Icons.Filled.Build),
-    Tab("guide", "Guide", Icons.Filled.Info),
     Tab("meteo", "Météo", Icons.Filled.Cloud)
 )
 

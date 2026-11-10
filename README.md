@@ -1,10 +1,37 @@
-# Pêche Débutant v0.3
+# Pêche Débutant v0.4
 
 A beginner fishing app for shore fishing at Ras Jebel, Bizerte, Ghar el Melh,
 Cap Zebib and Sidi Ali El Mekki, North Tunisia (Mediterranean).
 
 **Fish, Baits, Rigs and Guide tabs: fully offline, no login, no ads.**
 The Météo & Marée tab and the Accueil hero need internet (see below).
+
+## What is new in v0.4
+
+A restyle of the Accueil dashboard, driven by the three design skills
+learned on 2026-11-10. Nothing else changes: same 12 fish, 8 baits,
+5 rigs, Guide content, Météo and Check blassa rules, stories, feed,
+on-device likes and WhatsApp share as in v0.3.
+
+- **UI/UX Pro Max** — glassmorphism: the dashboard cards are now
+  frosted-glass surfaces (semi-transparent white over the deep navy
+  gradient, 1px light border, layered depth) instead of flat solid
+  cards. Consistent type scale on the dashboard and feed: score 56sp,
+  section titles 22sp, body 15sp, captions 12sp. Touch targets are
+  at least 48dp (stories circles 72dp, all dashboard buttons 48dp
+  minimum height). **Bottom nav: 5 tabs only** (Accueil, Poissons,
+  Appâts, Montages, Météo) — the Guide leaves the nav and is reached
+  from the dashboard Guide card and the Guide story; its route still
+  exists and works.
+- **Impeccable (Operate mode)** — scanability and consistency first.
+  This is a refinement, not a redesign: the incumbent navy (`#04121E` /
+  `#0A2E44`) + gold (`#D4AF37`) identity is preserved. The brief wins
+  over the tool's palette suggestion (a green accent was suggested and
+  not taken).
+- **Taste** — one section per screen, equal 16dp edges, card lift 2px
+  on press (translation only, layout bounds never shift), feed photo
+  zoom 1.02 inside its frame on press, hero entrance once on first
+  show. No tilt, no carousels. Real photographs kept everywhere.
 
 ## What is new in v0.3
 
@@ -39,7 +66,8 @@ The Météo & Marée tab and the Accueil hero need internet (see below).
 
 ## What is in v0.2
 
-6 tabs, bottom navigation:
+6 tabs in v0.2 and v0.3 (5 tabs from v0.4 — the Guide left the bottom
+navigation, see above), bottom navigation:
 
 - **Fish (Poissons)** — 12 fish of the area, searchable. Each fish has its
   French, English and Tunisian name, scientific name, habitat, season,
@@ -158,4 +186,4 @@ v0.1 had zero permissions. v0.2 adds three, only for the Météo & Marée tab:
 - Theme: sea blue `#0B5A7A` and sand, light theme following the system.
 - Network: only the Météo tab, with `HttpURLConnection` and `org.json`
   (built into Android). No OkHttp, no Retrofit, no other dependency added.
-- Version: versionCode 3, versionName "0.3".
+- Version: versionCode 4, versionName "0.4".
