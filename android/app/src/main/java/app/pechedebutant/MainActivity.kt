@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -77,7 +78,10 @@ import app.pechedebutant.data.baitById
 import app.pechedebutant.data.fishById
 import app.pechedebutant.data.photoBitmap
 import app.pechedebutant.data.rigById
+import app.pechedebutant.ui.AddCatchScreen
+import app.pechedebutant.ui.CatchDetailScreen
 import app.pechedebutant.ui.HomeScreen
+import app.pechedebutant.ui.JournalScreen
 import app.pechedebutant.ui.MeteoScreen
 import app.pechedebutant.ui.shareText
 import app.pechedebutant.ui.RigLegend
@@ -140,11 +144,15 @@ fun PecheApp() {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val route = backStack?.destination?.route ?: "home"
-    val isDetail = route.startsWith("fish/") || route.startsWith("bait/") || route.startsWith("rig/")
+    val isDetail = route.startsWith("fish/") || route.startsWith("bait/") || route.startsWith("rig/") ||
+        route.startsWith("journal/")
     val title = when {
         route.startsWith("fish/") -> "Fish detail"
         route.startsWith("bait/") -> "Bait detail"
         route.startsWith("rig/") -> "Rig detail"
+        route.startsWith("journal/catch/") -> "Ma prise"
+        route.startsWith("journal/add") -> "Nouvelle prise"
+        route.startsWith("journal/") -> "Journal"
         route == "home" -> "Accueil"
         route == "baits" -> "Baits (Appâts)"
         route == "rigs" -> "Rigs (Montages)"
@@ -202,6 +210,21 @@ fun PecheApp() {
             composable("rigs") { RigListScreen(nav) }
             composable("guide") { GuideScreen() }
             composable("meteo") { MeteoScreen() }
+            // v0.5 — Journal: catch log + saved spots. The specific routes
+            // come first: "journal/add" must not match "journal/{tab}".
+            composable("journal/add") { AddCatchScreen(nav, null) }
+            composable("journal/add/{fishId}") { entry ->
+                AddCatchScreen(nav, entry.arguments?.getString("fishId"))
+            }
+            composable("journal/catch/{id}") { entry ->
+                val id = entry.arguments?.getString("id")?.toLongOrNull() ?: 0L
+                CatchDetailScreen(nav, id)
+            }
+            // One route with a section argument ("prises" or "spots"),
+            // reached from the two Accueil dashboard cards.
+            composable("journal/{tab}") { entry ->
+                JournalScreen(nav, entry.arguments?.getString("tab") ?: "prises")
+            }
             composable("fish/{id}") { entry ->
                 val fish = fishById(entry.arguments?.getString("id") ?: "")
                 if (fish != null) FishDetailScreen(fish, nav) else NotFound("Fish not found.")
@@ -428,6 +451,16 @@ private fun FishDetailScreen(
             SectionTitle("Tackle")
             InfoRow("Hook size", fish.hookSize)
             InfoRow("Best rig", fish.bestRig)
+            // v0.5 — richer species card. Depth ranges are FishBase values
+            // (pageot and sole verified against fishbase.se); water
+            // temperature stays "Non renseigné" — FishBase publishes no
+            // single verified range per species, so the app never invents
+            // one. Edibility and lures are standard angling knowledge.
+            SectionTitle("Fiche complète")
+            InfoRow("Profondeur", fish.depthRange)
+            InfoRow("Eau favorable", fish.waterTempRange)
+            InfoRow("À table", fish.edibility)
+            InfoRow("Leurres", fish.lures)
             SectionTitle("Best baits — tap to see how to hook it")
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(fish.bestBaitIds) { baitId ->
@@ -443,6 +476,14 @@ private fun FishDetailScreen(
             }
             SectionTitle("Beginner tips")
             BulletList(fish.tips)
+            Spacer(Modifier.height(12.dp))
+            // v0.5 — add a catch to the log, with this fish pre-filled.
+            Button(
+                onClick = { nav.navigate("journal/add/${fish.id}") },
+                modifier = Modifier.fillMaxWidth().height(48.dp)
+            ) {
+                Text("Ajouter une prise")
+            }
             Spacer(Modifier.height(12.dp))
             OutlinedButton(
                 onClick = {

@@ -19,7 +19,17 @@ data class Fish(
     val bestBaitIds: List<String>,
     val hookSize: String,
     val bestRig: String,
-    val tips: List<String>
+    val tips: List<String>,
+    // v0.5 — richer species cards. Depth ranges are FishBase values
+    // (verified for pageot and sole against fishbase.se; the others are
+    // the standard published ranges). Edibility and lures are standard
+    // angling knowledge. Water temperature: FishBase publishes no single
+    // verified range per species, so it stays "Non renseigné" — the app
+    // never invents a number.
+    val depthRange: String = "Non renseigné",
+    val waterTempRange: String = "Non renseigné",
+    val edibility: String = "Non renseigné",
+    val lures: String = "Non renseigné"
 )
 
 data class Bait(
@@ -63,7 +73,10 @@ val FISH_LIST: List<Fish> = listOf(
         tips = listOf(
             "Fish on a calm sea, dorade is shy and feels the lead.",
             "Use a long fluorocarbon leader so the fish does not see the line."
-        )
+        ),
+        depthRange = "1 à 30 m (jusqu’à 150 m)",
+        edibility = "Excellente — très recherchée",
+        lures = "Leurres souples, petits jigs"
     ),
     Fish(
         id = "loup",
@@ -81,7 +94,10 @@ val FISH_LIST: List<Fish> = listOf(
         tips = listOf(
             "Best in September to April, on windy days, at dawn and dusk.",
             "Keep the bait moving naturally, a live shrimp is the best bait."
-        )
+        ),
+        depthRange = "0 à 30 m (jusqu’à 100 m)",
+        edibility = "Excellente — très recherchée",
+        lures = "Leurres de surface, jerkbaits, leurres souples"
     ),
     Fish(
         id = "sar",
@@ -99,7 +115,10 @@ val FISH_LIST: List<Fish> = listOf(
         tips = listOf(
             "Fish close to the rocks, sar lives in the rocks.",
             "Small baits work best, do not use a hook that is too big."
-        )
+        ),
+        depthRange = "0 à 50 m",
+        edibility = "Bonne",
+        lures = "Petits leurres souples"
     ),
     Fish(
         id = "marbre",
@@ -117,7 +136,10 @@ val FISH_LIST: List<Fish> = listOf(
         tips = listOf(
             "Fish on sand, best at night.",
             "Ragworm is the first bait to try for marbré."
-        )
+        ),
+        depthRange = "0 à 20 m (jusqu’à 50 m)",
+        edibility = "Bonne",
+        lures = "Petits leurres souples"
     ),
     Fish(
         id = "pageot",
@@ -135,7 +157,10 @@ val FISH_LIST: List<Fish> = listOf(
         tips = listOf(
             "A small strip of squid on the hook works well.",
             "Fish a little further out than for sar."
-        )
+        ),
+        depthRange = "20 à 100 m (jusqu’à 300 m)",
+        edibility = "Bonne",
+        lures = "Leurres souples, jigs légers"
     ),
     Fish(
         id = "mulet",
@@ -154,7 +179,10 @@ val FISH_LIST: List<Fish> = listOf(
             "Mulet is a classic fish of the Ghar el Melh lagoon.",
             "Other lagoon fish: dorade, loup, sole and eel.",
             "Fish with a small hook and a light rig, mulet is shy."
-        )
+        ),
+        depthRange = "0 à 10 m (jusqu’à 120 m)",
+        edibility = "Bonne (œufs en poutargue)",
+        lures = "Rarement aux leurres — appâts naturels"
     ),
     Fish(
         id = "rouget",
@@ -172,7 +200,10 @@ val FISH_LIST: List<Fish> = listOf(
         tips = listOf(
             "Use a small piece of worm or shrimp.",
             "Fish on sand, in the morning."
-        )
+        ),
+        depthRange = "0 à 100 m",
+        edibility = "Excellente",
+        lures = "Petits leurres souples"
     ),
     Fish(
         id = "oblade",
@@ -190,7 +221,10 @@ val FISH_LIST: List<Fish> = listOf(
         tips = listOf(
             "Fish close to the rocks.",
             "Oblade often comes in a group, so fish again in the same place."
-        )
+        ),
+        depthRange = "0 à 30 m",
+        edibility = "Bonne",
+        lures = "Petits leurres souples"
     ),
     Fish(
         id = "saupe",
@@ -208,7 +242,10 @@ val FISH_LIST: List<Fish> = listOf(
         tips = listOf(
             "Bread dough or a small piece of seaweed can work.",
             "Saupe eats plants too, so do not only use worm."
-        )
+        ),
+        depthRange = "0 à 20 m",
+        edibility = "Moyenne",
+        lures = "Rarement aux leurres — pain, algues"
     ),
     Fish(
         id = "maquereau",
@@ -226,7 +263,10 @@ val FISH_LIST: List<Fish> = listOf(
         tips = listOf(
             "Use a small strip of sardine.",
             "Maquereau moves in a group, fish fast when they are there."
-        )
+        ),
+        depthRange = "0 à 100 m (jusqu’à 200 m)",
+        edibility = "Excellente",
+        lures = "Mitraillette (plumes), cuillères"
     ),
     Fish(
         id = "orphie",
@@ -244,7 +284,10 @@ val FISH_LIST: List<Fish> = listOf(
         tips = listOf(
             "Fish at the surface, at dawn.",
             "Orphie has a long thin mouth, strike gently."
-        )
+        ),
+        depthRange = "0 à 20 m (souvent en surface)",
+        edibility = "Bonne",
+        lures = "Petites cuillères, leurres de surface"
     ),
     Fish(
         id = "sole",
@@ -279,7 +322,10 @@ val BAIT_LIST: List<Bait> = listOf(
             "Slide the worm up the hook, threading it along the shank.",
             "Push the hook out again in the middle of the worm, so it stays on.",
             "Leave the tail free, about 2 to 3 cm. It must wriggle in the water."
-        )
+        ),
+        depthRange = "0 à 150 m",
+        edibility = "Excellente",
+        lures = "Rarement aux leurres — appâts sur le fond"
     ),
     Bait(
         id = "bibi",

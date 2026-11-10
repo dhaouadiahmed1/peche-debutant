@@ -50,9 +50,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import app.pechedebutant.data.Solunar
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.Duration
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.Dispatchers
@@ -62,8 +64,8 @@ import org.json.JSONObject
 
 // Fallback position: Ras Jebel, the spot in the app. Only used when there is
 // no location permission or no GPS fix.
-private const val FALLBACK_LAT = 37.2476
-private const val FALLBACK_LON = 10.0697
+const val FALLBACK_LAT = 37.2476
+const val FALLBACK_LON = 10.0697
 private const val FALLBACK_NAME = "Ras Jebel"
 
 data class DayForecast(
@@ -555,6 +557,86 @@ fun MeteoScreen() {
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold
                             )
+                        }
+                    }
+                }
+                // v0.5 — Solunar best hours. Local moon math only (Solunar.kt),
+                // no server. Every value is an estimate: the card says so and
+                // shows the rule used. Sunrise/sunset come from Open-Meteo
+                // above (data.days), not from a sun calculation.
+                item {
+                    val todaySolunar = Solunar.solunarFor(LocalDate.now(), lat, lon)
+                    val tomorrowSolunar = Solunar.solunarFor(LocalDate.now().plusDays(1), lat, lon)
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Meilleures heures — d'après la lune",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Estimation, pas une science exacte. " +
+                                    "Règle : 2 h autour du passage de la lune " +
+                                    "(majeure), 1 h autour du lever et du " +
+                                    "coucher de la lune (mineure).",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            InfoLine(
+                                "Lune",
+                                "${todaySolunar.moon.phaseName} — " +
+                                    "${todaySolunar.moon.illuminationPct}% éclairée"
+                            )
+                            InfoLine(
+                                "Lever de lune",
+                                todaySolunar.moonriseMin?.let { Solunar.formatMin(it) } ?: "—"
+                            )
+                            InfoLine(
+                                "Coucher de lune",
+                                todaySolunar.moonsetMin?.let { Solunar.formatMin(it) } ?: "—"
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = "Aujourd'hui",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            if (todaySolunar.periods.isEmpty()) {
+                                Text(
+                                    text = "—",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            } else {
+                                todaySolunar.periods.forEach { period ->
+                                    InfoLine(
+                                        if (period.kind == "Majeure") "Période majeure" else "Période mineure",
+                                        Solunar.formatPeriod(period)
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = "Demain — ${tomorrowSolunar.moon.phaseName}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            if (tomorrowSolunar.periods.isEmpty()) {
+                                Text(
+                                    text = "—",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            } else {
+                                tomorrowSolunar.periods.forEach { period ->
+                                    InfoLine(
+                                        if (period.kind == "Majeure") "Période majeure" else "Période mineure",
+                                        Solunar.formatPeriod(period)
+                                    )
+                                }
+                            }
                         }
                     }
                 }

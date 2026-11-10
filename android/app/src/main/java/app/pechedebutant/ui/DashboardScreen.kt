@@ -87,6 +87,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import app.pechedebutant.data.BAIT_LIST
 import app.pechedebutant.data.FISH_LIST
+import app.pechedebutant.data.Solunar
 import app.pechedebutant.data.photoBitmap
 import java.net.HttpURLConnection
 import java.net.URL
@@ -273,7 +274,7 @@ private fun saveMeteoCache(context: Context, data: MeteoData) {
         .apply()
 }
 
-private fun loadMeteoCache(context: Context): MeteoData? {
+fun loadMeteoCache(context: Context): MeteoData? {
     val prefs = context.getSharedPreferences(METEO_PREFS, Context.MODE_PRIVATE)
     val todayDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
     if (prefs.getString("date", "") != todayDate) return null
@@ -391,6 +392,38 @@ private fun buildFeed(meteo: MeteoData?): List<FeedPost> {
             )
         )
     }
+    // v0.5 — Solunar best hours for Ras Jebel, local moon math only.
+    // Every value is an estimate; the post says so.
+    val solunar = Solunar.solunarFor(LocalDate.now(), DASH_LAT, DASH_LON)
+    val majors = solunar.periods.filter { it.kind == "Majeure" }
+    val minors = solunar.periods.filter { it.kind == "Mineure" }
+    val solunarBody = buildString {
+        append("${solunar.moon.phaseName}, ${solunar.moon.illuminationPct}% éclairée. ")
+        if (majors.isNotEmpty()) {
+            append("Meilleures heures : ")
+            append(majors.joinToString(", ") { Solunar.formatPeriod(it) })
+            append(". ")
+        }
+        if (minors.isNotEmpty()) {
+            append("Bonnes heures : ")
+            append(minors.joinToString(", ") { Solunar.formatPeriod(it) })
+            append(". ")
+        }
+        append("Estimation d'après la lune.")
+    }
+    posts.add(
+        FeedPost(
+            id = "solunar",
+            tag = "MEILLEURES HEURES · AUJOURD'HUI",
+            title = "Pêche d'après la lune",
+            body = solunarBody,
+            photoSlug = null,
+            route = "meteo",
+            baseLikes = 6,
+            shareText = "Pêche Débutant — Meilleures heures aujourd'hui à " +
+                "$DASH_PLACE : $solunarBody"
+        )
+    )
     val fish = FISH_LIST[dayOfYear % FISH_LIST.size]
     val fishBaits = fish.bestBaitIds.mapNotNull { id ->
         BAIT_LIST.firstOrNull { it.id == id }?.frenchName
@@ -1010,6 +1043,52 @@ fun HomeScreen(nav: NavHostController) {
                     fontSize = 13.sp,
                     modifier = Modifier.padding(18.dp, 4.dp, 18.dp, 18.dp)
                 )
+            }
+        }
+
+        // v0.5 — Journal: catch log and saved spots. On-device only,
+        // no account, no server. Two cards, one per section.
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                PressableCard(
+                    onClick = { nav.navigate("journal/prises") },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = "Mes prises",
+                        color = Cream,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(18.dp, 18.dp, 18.dp, 0.dp)
+                    )
+                    Text(
+                        text = "Carnet de pêche : tes prises, avec la météo du moment",
+                        color = Muted,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(18.dp, 4.dp, 18.dp, 18.dp)
+                    )
+                }
+                PressableCard(
+                    onClick = { nav.navigate("journal/spots") },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = "Mes spots",
+                        color = Cream,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(18.dp, 18.dp, 18.dp, 0.dp)
+                    )
+                    Text(
+                        text = "Tes coins de pêche enregistrés, avec navigation",
+                        color = Muted,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(18.dp, 4.dp, 18.dp, 18.dp)
+                    )
+                }
             }
         }
 

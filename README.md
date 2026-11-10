@@ -1,10 +1,63 @@
-# Pêche Débutant v0.4
+# Pêche Débutant v0.5
 
 A beginner fishing app for shore fishing at Ras Jebel, Bizerte, Ghar el Melh,
 Cap Zebib and Sidi Ali El Mekki, North Tunisia (Mediterranean).
 
 **Fish, Baits, Rigs and Guide tabs: fully offline, no login, no ads.**
 The Météo & Marée tab and the Accueil hero need internet (see below).
+
+## What is new in v0.5
+
+Five features ported from Fishing Points v4.8.1 — **clean-room, written
+from scratch** from a static analysis of that app (report:
+`fishing-points-analysis/REPORT.md`). No code, no assets and no server
+from Fishing Points are used. No account, no server, no ads, no new
+permission. The bottom nav stays at exactly 5 tabs.
+
+- **Mes prises (catch log)** — a catch log saved on the phone only
+  (hand-written `SQLiteOpenHelper`, no Room, no new dependency).
+  Each catch: fish (one of the 12), optional length / weight / bait /
+  notes / position, plus an automatic weather snapshot at catch time
+  (wind, wave, sea temperature, Check blassa score) taken from today's
+  saved météo cache. If no weather was loaded today, the snapshot stays
+  empty ("—") — the app never invents weather. List (newest first,
+  with the fish's real photo), add form, detail, delete, and a stats
+  row (total catches + biggest catch). An "Ajouter une prise" button
+  on each fish detail screen pre-fills that fish. **No photo capture
+  in v0.5** (camera + FileProvider is a later step).
+- **Meilleures heures (solunar)** — best fishing hours from the moon,
+  computed on the phone only (local astronomy math, no server): moon
+  phase + illumination % (synodic month 29.53 days from the new moon of
+  2000-01-06), moonrise / moonset / transit from a standard
+  low-precision lunar calculation, then major periods (2 h around the
+  moon transit and the lower transit) and minor periods (1 h around
+  moonrise and moonset). Shown as a card on the Météo tab (today +
+  tomorrow) and as a feed post on Accueil. Every value is labelled an
+  estimate ("estimation d'après la lune") and the rule used is shown.
+  If a value cannot be computed, the card shows "—". No notifications
+  or reminders in v0.5.
+- **Mes spots (saved GPS spots)** — same SQLite database, second table.
+  "Enregistrer ma position" saves the phone's current GPS position
+  with a name and notes. Each spot shows the distance from the current
+  position (when available) and a "Naviguer" button that opens the spot
+  in the maps app of the user's choice (geo: intent, no map UI in v0.5).
+  **Nothing is pre-seeded with coordinates** — the 5 Guide spots stay
+  by name only. Catches and spots share one "Journal" screen with two
+  sections (Prises | Spots), reached from two Accueil dashboard cards.
+- **Richer species cards** — each fish detail screen now shows a
+  "Fiche complète": depth range, water temperature, edibility and
+  recommended lures. Depth ranges are FishBase values (pageot:
+  20–100 m, up to 300 m; sole: 0–150 m — verified against fishbase.se;
+  the others are the standard published ranges). Water temperature
+  stays "Non renseigné": FishBase publishes no single verified range
+  per species, so the app never invents a number. Edibility and lures
+  are standard angling knowledge.
+- **Home-screen widget** — a standard Android AppWidget showing
+  today's Check blassa score (from the saved-today cache; if none,
+  "Ouvrir l'app" — never an invented score) + today's solunar best
+  hours for Ras Jebel. Tapping it opens the app. Updates via WorkManager
+  periodic work (every 6 h) — the **one new dependency** in v0.5:
+  `androidx.work:work-runtime-ktx:2.9.0` (a standard Google library).
 
 ## What is new in v0.4
 
@@ -185,5 +238,8 @@ v0.1 had zero permissions. v0.2 adds three, only for the Météo & Marée tab:
 - minSdk 26, targetSdk 34, compileSdk 34, Gradle 8.7, AGP 8.5.2.
 - Theme: sea blue `#0B5A7A` and sand, light theme following the system.
 - Network: only the Météo tab, with `HttpURLConnection` and `org.json`
-  (built into Android). No OkHttp, no Retrofit, no other dependency added.
-- Version: versionCode 4, versionName "0.4".
+  (built into Android). No OkHttp, no Retrofit. v0.5 adds one dependency
+  only: WorkManager (`androidx.work:work-runtime-ktx:2.9.0`) for the widget.
+  Storage: hand-written `SQLiteOpenHelper` for the Journal (catches +
+  spots), no Room.
+- Version: versionCode 5, versionName "0.5".

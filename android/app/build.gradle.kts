@@ -12,8 +12,8 @@ android {
         applicationId = "app.pechedebutant"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "0.4"
+        versionCode = 5
+        versionName = "0.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -52,6 +52,9 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.7.7")
+    // v0.5: the ONE new dependency — WorkManager, for the home-screen
+    // widget periodic updates. Standard Google library, nothing else new.
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
