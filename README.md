@@ -1,10 +1,47 @@
-# Pêche Débutant v0.5
+# Pêche Débutant v0.6
 
 A beginner fishing app for shore fishing at Ras Jebel, Bizerte, Ghar el Melh,
 Cap Zebib and Sidi Ali El Mekki, North Tunisia (Mediterranean).
 
 **Fish, Baits, Rigs and Guide tabs: fully offline, no login, no ads.**
 The Météo & Marée tab and the Accueil hero need internet (see below).
+
+## What is new in v0.6
+
+Prévisions — the five forecast screens of Fishing Points v4.0.1,
+ported **clean-room, written from scratch** from a static analysis of
+that app (report: `fishing-points-v401-analysis/REPORT-v4.0.1.md`).
+No code, no assets and no server from Fishing Points are used.
+No account, no server, no ads, no new permission, no new dependency.
+The bottom nav stays at exactly 5 tabs — Prévisions lives inside the
+Météo tab, under the unchanged Check blassa card, as 5 sub-tabs.
+
+- **Activité (L'activité des poissons)** — our own fish-activity
+  score, computed on the phone only (`data/FishActivity.kt`): 48
+  half-hour points per day, 0–100, shown as a bar chart, with a daily
+  score and 0–3 stars. Rule, shown on screen: base 20, +45 bell around
+  each major period centre (±75 min), +25 bell around each minor
+  period centre (±45 min), +12 bell around sunrise and sunset
+  (±60 min). Moon phase + illumination % and the best hours (major /
+  minor periods) for today and tomorrow, from the local solunar math
+  of v0.5. Labelled "Estimation, pas une science exacte" — never
+  presented as exact science.
+- **Vagues** — current wave height / period / direction, swell height /
+  period / direction, wind-wave height and sea temperature (Open-Meteo
+  Marine, free, no key), plus the next 24 h every 3 h and the noon
+  wave values for day 2 and day 3.
+- **Marées** — high and low tide times for today + the next 2 days,
+  derived exactly as before from the hourly sea-level series
+  (`sea_level_height_msl`, local maxima / minima) — never invented.
+  The note stays: the Mediterranean tide here is small (~0.2–0.3 m),
+  wind and waves matter more.
+- **Météo** — 7-day forecast (was 3 days), current temperature,
+  feels-like, pressure, UV index, cloud cover, wind / gusts, humidity
+  and rain probability, plus the next 12 h hour by hour.
+- **Soleil & lune** — for today, tomorrow and the day after:
+  sunrise / sunset and daylight length (Open-Meteo), moonrise /
+  moonset, moon phase + illumination % and major / minor periods
+  (local moon math, works offline).
 
 ## What is new in v0.5
 
@@ -150,7 +187,8 @@ navigation, see above), bottom navigation:
   and period, sea surface temperature, sunrise and sunset, 3-day forecast,
   and today's high and low tide times. Plus a "Check blassa" score out of
   10 (BAHYA / MTEWASTA / MOUCH BAHYA) with the reasons listed, the best
-  fish to target now, and the best bait now.
+  fish to target now, and the best bait now. (v0.6: 7-day forecast and
+  the 5 Prévisions sub-tabs — see "What is new in v0.6".)
   - Position: the phone GPS (Android LocationManager, no Google Play
     Services). If there is no permission or no GPS fix, the app uses
     Ras Jebel (37.2476, 10.0697) and says so on screen.
@@ -242,4 +280,4 @@ v0.1 had zero permissions. v0.2 adds three, only for the Météo & Marée tab:
   only: WorkManager (`androidx.work:work-runtime-ktx:2.9.0`) for the widget.
   Storage: hand-written `SQLiteOpenHelper` for the Journal (catches +
   spots), no Room.
-- Version: versionCode 5, versionName "0.5".
+- Version: versionCode 6, versionName "0.6".
